@@ -1,0 +1,2 @@
+¼{Item: {AvailableJobs={L: [{S: rdm,}, {S: mch,}],}, DiscordId={S: test-id,}, WeeklyRaidLimit={S: 5,}, CharacterName={S: char name2,}, CurrentSignups={L: [{S: raid-2,}, {S: raid-1,}],}},}
+†UserModel(discordId=test-id, characterName=char name2, availableJobs=[rdm, mch], weeklyRaidLimit=5, currentSignups=[raid-2, raid-1])

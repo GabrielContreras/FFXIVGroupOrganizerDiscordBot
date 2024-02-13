@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="raidhelper.dynamodb.dao.UserDaoImplTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2024-02-11T23:43:10" hostname="NAVIPC" time="0.886">
+  <properties/>
+  <testcase name="Testing get user()" classname="raidhelper.dynamodb.dao.UserDaoImplTest" time="0.886"/>
+  <system-out><![CDATA[{Item: {AvailableJobs={L: [{S: rdm,}, {S: mch,}],}, DiscordId={S: test-id,}, WeeklyRaidLimit={S: 5,}, CharacterName={S: char name2,}, CurrentSignups={L: [{S: raid-2,}, {S: raid-1,}],}},}
+UserModel(discordId=test-id, characterName=char name2, availableJobs=[rdm, mch], weeklyRaidLimit=5, currentSignups=[raid-2, raid-1])
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
