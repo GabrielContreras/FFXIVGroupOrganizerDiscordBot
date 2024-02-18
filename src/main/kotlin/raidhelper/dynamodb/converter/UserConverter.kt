@@ -1,47 +1,28 @@
 package raidhelper.dynamodb.converter
 
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
+import com.amazonaws.services.kms.model.NotFoundException
 import raidhelper.dynamodb.model.UserModel
 import raidhelper.dynamodb.record.UserRecord
 
 class UserConverter {
-    fun fromRecord(record: UserRecord): UserModel {
+    fun toUser(record: Map<String,AttributeValue>): UserModel {
         return UserModel(
-            record.DiscordId,
-            record.CharacterName,
-            record.AvailableJobs.map { it.s },
-            record.WeeklyRaidLimit.toInt(), // Handle potential conversions
-            record.CurrentSignups.map { it.s }
+            record["DiscordId"]?.s ?: error("DiscordID needs to be added."),
+            record["CharacterName"]?.s ?: "",
+            record["AvailableJobs"]?.l?.map { it.s } ?: listOf(),
+            record["WeeklyRaidLimit"]?.n?.toIntOrNull() ?: 0, // Handle potential conversions
+            record["CurrentSignups"]?.l?.map { it.s } ?: listOf(),
         )
     }
 
-    fun toRecord(user: UserModel): UserRecord {
-        return UserRecord(
-            user.discordId,
-            user.characterName,
-            user.availableJobs.map { AttributeValue().withS(it) },
-            user.weeklyRaidLimit.toString(),
-            user.currentSignups.map { AttributeValue().withS(it) }
+    fun toDdb(user: UserModel): Map<String,AttributeValue> {
+        return mapOf(
+            "DiscordId" to AttributeValue().withS(user.discordId),
+            "CharacterName" to AttributeValue().withS(user.characterName),
+            "AvailableJobs" to AttributeValue().withL(user.availableJobs.map { AttributeValue().withS(it) }),
+            "WeeklyRaidLimit" to AttributeValue().withS(user.weeklyRaidLimit.toString()),
+            "CurrentSignups" to AttributeValue().withL(user.currentSignups.map { AttributeValue().withS(it) }),
         )
-    }
-
-    fun fromDdb(item: Map<String, AttributeValue>): UserRecord {
-        return UserRecord(
-            item["DiscordId"]?.s ?: error("DiscordId Missing"),
-            item["CharacterName"]?.s ?: error("CharacterName Missing"),
-            item["AvailableJobs"]?.l?.map { AttributeValue().withS(it.s) } ?: emptyList(),
-            item["WeeklyRaidLimit"]?.s ?: error("WeeklyRaidLimit Missing"),
-            item["CurrentSignups"]?.l?.map { AttributeValue().withS(it.s) } ?: emptyList()
-        )
-    }
-
-    fun toDB(user: UserModel, propertyName: String): AttributeValue {
-        return when (propertyName) {
-            "CharacterName" -> AttributeValue().withS(user.characterName)
-            "AvailableJobs" -> AttributeValue().withL(user.availableJobs.map { AttributeValue().withS(it) })
-            "WeeklyRaidLimit" -> AttributeValue().withS(user.weeklyRaidLimit.toString())
-            "CurrentSignups" -> AttributeValue().withL(user.currentSignups.map { AttributeValue().withS(it) })
-            else -> error("Invalid property name: $propertyName")
-        }
     }
 }

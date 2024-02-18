@@ -5,36 +5,27 @@ import raidhelper.dynamodb.model.RaidModel
 import raidhelper.dynamodb.record.RaidRecord
 
 object RaidConverter {
-    fun fromRecord(record: RaidRecord): RaidModel {
+    fun toRaid(record: Map<String,AttributeValue>): RaidModel {
         return RaidModel(
-            record.RaidID,
-            record.RaidLeader,
-            record.DateAndTime,
-            record.Participants.map { it.s }, // Extract string values
-            record.RoleComposition.mapKeys { it.key }.mapValues { it.value.n?.toInt() ?: 0 }, // Handle potential number conversions
-            record.Status
+            record["RaidId"]?.s ?: error("RaidID needs to be added"),
+            record["RaidLeader"]?.s ?: error("RaidLeader needs to be added"),
+            record["DateAndTime"]?.s ?: error("Date needs to be added"),
+            record["Participants"]?.l?.map { it.s } ?: listOf(),
+            record["RoleComposition"]?.m?.mapKeys { it.key }?.mapValues { it.value.n.toInt() } ?: emptyMap(),
+            record["Status"]?.s ?: "Open",
         )
     }
 
-    fun toRecord(raid: RaidModel): RaidRecord {
-        return RaidRecord(
-            raid.raidId,
-            raid.raidLeader,
-            raid.dateAndTime,
-            raid.participants.map { AttributeValue().withS(it) },
-            raid.roleComposition.mapKeys { it.key }.mapValues { AttributeValue().withN(it.value.toString()) },
-            raid.status
-        )
-    }
-
-    fun fromDdb(item: Map<String, AttributeValue>): RaidRecord {
-        return RaidRecord(
-            item["RaidID"]?.s ?: error("RaidID Missing"),
-            item["RaidLeader"]?.s ?: error("RaidLeader Missing"),
-            item["DateAndTime"]?.s ?: error("DateAndTime Missing"),
-            item["Participants"]?.l?.map { AttributeValue().withS(it.s) }?.toList() ?: emptyList(),
-            item["RoleComposition"]?.m?.mapKeys { it.key }?.mapValues { AttributeValue().withN(it.value.n ?: "0") } ?: emptyMap(), // Corrected type and default value.
-            item["Status"]?.s ?: error("Status Missing")
+    fun toDdb(raid: RaidModel): Map<String,AttributeValue> {
+        return mapOf(
+            "RaidId" to AttributeValue().withS(raid.raidId),
+            "RaidLeader" to AttributeValue().withS(raid.raidLeader),
+            "DateAndTime" to AttributeValue().withS(raid.dateAndTime),
+            "Participants" to AttributeValue().withL(raid.participants.map { AttributeValue().withS(it) }),
+            "RoleComposition" to AttributeValue().withM(
+                raid.roleComposition.mapValues { (_, value) -> AttributeValue().withN(value.toString()) }
+            ),
+            "Status" to AttributeValue().withS(raid.status),
         )
     }
 }

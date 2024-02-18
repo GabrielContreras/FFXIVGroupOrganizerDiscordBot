@@ -1,31 +1,24 @@
 package raidhelper.dynamodb.converter
 
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
+import org.w3c.dom.Attr
 import raidhelper.dynamodb.model.RaidGroupModel
 import raidhelper.dynamodb.record.RaidGroupRecord
 
 class RaidGroupConverter {
-    fun fromRecord(record: RaidGroupRecord): RaidGroupModel {
+    fun toRaidGroup(record: Map<String,AttributeValue>): RaidGroupModel {
         return RaidGroupModel(
-            record.RaidGroupId,
-            record.RaidIDs.map { it.s },
-            record.UserIDs.map { it.s }
+            record["RaidGroupId"]?.s ?: error("RaidGroupId needs to be added"),
+            record["RaidIds"]?.l?.map { it.s } ?: listOf(),
+            record["UserIds"]?.l?.map { it.s } ?: listOf(),
         )
     }
 
-    fun toRecord(group: RaidGroupModel): RaidGroupRecord {
-        return RaidGroupRecord(
-            group.raidGroupId,
-            group.raidIds.map { AttributeValue().withS(it) },
-            group.userIds.map { AttributeValue().withS(it) }
-        )
-    }
-
-    fun fromDdb(item: Map<String, AttributeValue>): RaidGroupRecord {
-        return RaidGroupRecord(
-            item["RaidGroupId"]?.s ?: error("RaidGroupId Missing"),
-            item["RaidIDs"]?.l?.map { AttributeValue().withS(it.s) }?.toList() ?: emptyList(),
-            item["UserIDs"]?.l?.map { AttributeValue().withS(it.s) }?.toList() ?: emptyList()
+    fun toDdb(raidGroup: RaidGroupModel): Map<String,AttributeValue> {
+        return mapOf(
+            "RaidGroupId" to AttributeValue().withS(raidGroup.raidGroupId),
+            "RaidIds" to AttributeValue().withL(raidGroup.raidIds.map { AttributeValue().withS(it) }),
+            "UserIds" to AttributeValue().withL(raidGroup.userIds.map { AttributeValue().withS(it) }),
         )
     }
 }

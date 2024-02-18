@@ -9,15 +9,12 @@ import raidhelper.dynamodb.record.toMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class UserDaoImpl(ddbClient: AmazonDynamoDB) : UserDao {
-    private val ddbClient = ddbClient
-    private val tableName = System.getenv("RAIDS_TABLE_NAME") ?: "Users"
+class UserDaoImpl(private val ddbClient: AmazonDynamoDB) : UserDao {
+    private val tableName = System.getenv("USERS_TABLE_NAME") ?: "Users"
 
     override fun createUser(user: UserModel): Boolean {
-        val userRecord = UserConverter().toRecord(user)
-        println(userRecord)
-        val request = PutItemRequest(tableName, userRecord.toMap())
-        println(request)
+        val userRecord = UserConverter().toDdb(user)
+        val request = PutItemRequest(tableName, userRecord)
         try {
             ddbClient.putItem(request)
             return true
@@ -31,12 +28,10 @@ class UserDaoImpl(ddbClient: AmazonDynamoDB) : UserDao {
     override fun getUser(discordId: String): UserModel? {
         val key = mapOf("DiscordId" to AttributeValue().withS(discordId))
         val request = GetItemRequest(tableName, key)
-
         try {
             val result = ddbClient.getItem(request)
-            println(result)
             return if (result.item != null) {
-                UserConverter().fromRecord(UserConverter().fromDdb(result.item))
+                UserConverter().toUser(result.item)
             } else {
                 null
             }
@@ -48,7 +43,7 @@ class UserDaoImpl(ddbClient: AmazonDynamoDB) : UserDao {
     }
 
     override fun updateUser(user: UserModel): Boolean {
-        val userRecord = UserConverter().toRecord(user)
+        val userRecord = UserConverter().toDdb(user)
         val key = mapOf("DiscordId" to AttributeValue().withS(user.discordId))
 
         // Build update expression (efficiently modifies only certain attributes)
@@ -59,11 +54,13 @@ class UserDaoImpl(ddbClient: AmazonDynamoDB) : UserDao {
         for (prop in listOf("CharacterName", "AvailableJobs", "WeeklyRaidLimit", "CurrentSignups")) {
             if (needsComma) updateExpression.append(", ")
             updateExpression.append("$prop = :$prop")
-            expressionAttributeValues[":$prop"] = UserConverter().toDB(user, prop)
+            expressionAttributeValues[":$prop"] = if(prop == "AvailableJobs" || prop == "CurrentSignups"){
+                AttributeValue().withL(userRecord[prop]?.l ?: emptyList())
+            } else {
+                AttributeValue().withS(userRecord[prop]?.s)
+            }
             needsComma = true
         }
-
-        println("Expression string: ${updateExpression.toString()}")
 
         val request = UpdateItemRequest()
             .withTableName(tableName)
