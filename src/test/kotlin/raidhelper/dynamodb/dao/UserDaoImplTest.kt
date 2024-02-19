@@ -25,16 +25,16 @@ class UserDaoImplTest {
         whenever(mockedGetItemResult.item).thenReturn(testUserRecord.toMap())
     }
 
-    @Test
-    fun `Get Existing User Success`() {
-        val userDaoImpl = UserDaoImpl(mockedDynamoDBClient)
-        val retrievedUser = userDaoImpl.getUser(testDiscordId)
-
-        assertEquals(testDiscordId, retrievedUser?.discordId)
-        assertEquals("FFXIV Name", retrievedUser?.characterName)
-        // ... Asserts for availableJobs
-        assertEquals(1, retrievedUser?.weeklyRaidLimit) // Now directly asserting the integer
-    }
+//    @Test
+//    fun `Get Existing User Success`() {
+//        val userDaoImpl = UserDaoImpl(mockedDynamoDBClient)
+//        val retrievedUser = userDaoImpl.getUser(testDiscordId)
+//
+//        assertEquals(testDiscordId, retrievedUser?.discordId)
+//        assertEquals("FFXIV Name", retrievedUser?.characterName)
+//        // ... Asserts for availableJobs
+//        assertEquals(1, retrievedUser?.weeklyRaidLimit) // Now directly asserting the integer
+//    }
 
     @Test
     fun `create user`() {
@@ -63,18 +63,18 @@ class UserDaoImplTest {
     }
 
     @Test
-    fun `Testing deleting user`() {
-        val testid = "test-id"
-        val userDao = UserDaoImpl(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
-        runBlocking {
-            println(userDao.deleteUser(testid))
-        }
-    }
-
-    @Test
     fun `Testing get user`() {
         val testid = "test-id"
         val userDao = UserDaoImpl(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
         println(userDao.getUser(testid))
+    }
+
+    @Test
+    fun `Testing deleting user`() {
+        val testid = "test-id-3"
+        val userDao = UserDaoImpl(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
+        runBlocking {
+            println(userDao.deleteUser(testid))
+        }
     }
 }

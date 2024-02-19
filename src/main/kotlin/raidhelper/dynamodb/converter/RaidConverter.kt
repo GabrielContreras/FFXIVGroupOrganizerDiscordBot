@@ -7,7 +7,7 @@ import raidhelper.dynamodb.record.RaidRecord
 object RaidConverter {
     fun toRaid(record: Map<String,AttributeValue>): RaidModel {
         return RaidModel(
-            record["RaidId"]?.s ?: error("RaidID needs to be added"),
+            record["RaidID"]?.s ?: error("RaidID needs to be added"),
             record["RaidLeader"]?.s ?: error("RaidLeader needs to be added"),
             record["DateAndTime"]?.s ?: error("Date needs to be added"),
             record["Participants"]?.l?.map { it.s } ?: listOf(),
@@ -16,9 +16,10 @@ object RaidConverter {
         )
     }
 
+    // TODO: Update RaidID to be uniform naming convention to out IDs: raidId
     fun toDdb(raid: RaidModel): Map<String,AttributeValue> {
         return mapOf(
-            "RaidId" to AttributeValue().withS(raid.raidId),
+            "RaidID" to AttributeValue().withS(raid.raidId),
             "RaidLeader" to AttributeValue().withS(raid.raidLeader),
             "DateAndTime" to AttributeValue().withS(raid.dateAndTime),
             "Participants" to AttributeValue().withL(raid.participants.map { AttributeValue().withS(it) }),

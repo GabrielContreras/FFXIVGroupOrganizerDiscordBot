@@ -32,7 +32,9 @@ class RaidDaoImpl(ddbClient: AmazonDynamoDB) : RaidDao {
 
     override fun getRaid(raidId: String): RaidModel? {
         val key = mapOf("RaidID" to AttributeValue().withS(raidId))
+        println(key)
         val request = GetItemRequest(tableName, key)
+        println(request)
         try {
             val result = ddbClient.getItem(request)
             return if (result.item != null) {
@@ -41,7 +43,7 @@ class RaidDaoImpl(ddbClient: AmazonDynamoDB) : RaidDao {
                 null
             }
         } catch (e: Exception) {
-            println("Failed to get user: $e")
+            println("Failed to get raid item: $e")
             // Add robust error logging here
             return null
         }
@@ -54,9 +56,10 @@ class RaidDaoImpl(ddbClient: AmazonDynamoDB) : RaidDao {
         // Build an update expression dynamically
         val updateExpression = StringBuilder("SET ")
         val expressionAttributeValues = mutableMapOf<String, AttributeValue>()
+        val expressionAttributeNames = mutableMapOf<String,String>()
 
         var needsComma = false
-        for(prop in listOf("RaidLeader", "Participants", "DateAndTime", "RoleComposition", "Status")) {
+        for(prop in listOf("RaidLeader", "Participants", "DateAndTime", "RoleComposition")) {
             if(needsComma) updateExpression.append(", ")
             updateExpression.append("$prop = :$prop")
             expressionAttributeValues[":$prop"] = if(prop == "Participants") {
@@ -69,11 +72,21 @@ class RaidDaoImpl(ddbClient: AmazonDynamoDB) : RaidDao {
             needsComma = true
         }
 
+        if(needsComma) updateExpression.append(", ")
+        updateExpression.append("#status = :status")
+        expressionAttributeValues[":status"] = AttributeValue().withS(raidRecord["Status"]?.s)
+        expressionAttributeNames["#status"] = "Status"
+
+        println("Update expresion: $updateExpression")
+        println("Expression attribute values: $expressionAttributeValues")
+        println("Expression attribute names: $expressionAttributeNames")
+
         val request = UpdateItemRequest()
             .withTableName(tableName)
             .withKey(key)
             .withUpdateExpression(updateExpression.toString())
             .withExpressionAttributeValues(expressionAttributeValues)
+            .withExpressionAttributeNames(expressionAttributeNames)
         try {
             ddbClient.updateItem(request)
             return true

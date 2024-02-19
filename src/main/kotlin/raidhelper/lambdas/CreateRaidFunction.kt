@@ -1,9 +1,13 @@
 package raidhelper.lambdas
 
+import com.amazonaws.regions.Regions
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
-import com.amazonaws.services.dynamodbv2.model.AttributeValue
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import raidhelper.dynamodb.converter.RaidConverter
+import raidhelper.dynamodb.model.RaidModel
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.*
@@ -12,43 +16,47 @@ import java.util.*
 data class RaidCreationRequest(
     val raidLeader: String,
     val dateAndTime: String, // Could be represented as an ISO 8601 compliant date-time string
-    val raidName: String // To make it descriptive and add flexibility as needed
+    val participants: List<String>,
+    val roleComposition: Map<String,Int>,
 )
 
 // Response data class
 data class RaidCreationResponse(val raidId: String, val success: Boolean)
 
-class CreateRaidFunction : RequestHandler<RaidCreationRequest, RaidCreationResponse> {
-    private val dynamoDB = AmazonDynamoDBClientBuilder.defaultClient()
-    private val raidsTable = System.getenv("Raids")
+class CreateRaidFunction : RequestHandler<Map<String,Any>, RaidCreationResponse> {
+    private val dynamoDB = AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build()
+    private val raidsTable = System.getenv("Raids") ?: "Raids"
 
-    override fun handleRequest(request: RaidCreationRequest, context: Context): RaidCreationResponse {
+    override fun handleRequest(request: Map<String,Any>, context: Context?): RaidCreationResponse {
         try {
+            val mapper = ObjectMapper().registerKotlinModule()
+            val jsonString = mapper.writeValueAsString(request)
+            val raidCreationRequest: RaidCreationRequest = mapper.readValue(jsonString, RaidCreationRequest::class.java)
+
             // 1. Generate RaidID (using UUID)
             val raidId = UUID.randomUUID().toString()
 
+            val raid = RaidModel(
+                raidId = raidId,
+                raidLeader = raidCreationRequest.raidLeader,
+                dateAndTime = raidCreationRequest.dateAndTime,
+                participants = raidCreationRequest.participants,
+                roleComposition = raidCreationRequest.roleComposition,
+                status = "Open",
+            )
             // 2. Input Validation
-            if (!isValidDateTime(request.dateAndTime)) {
+            if (!isValidDateTime(raid.dateAndTime)) {
                 return RaidCreationResponse(raidId = "", success = false) // Indicate Validation Failure
             }
 
-            // 3. Construct DynamoDB Item
-            val item = mutableMapOf<String, AttributeValue>()
-            item["RaidID"] = AttributeValue(raidId)
-            item["RaidLeader"] = AttributeValue(request.raidLeader)
-            item["DateAndTime"] = AttributeValue(request.dateAndTime)
-            item["RaidName"] = AttributeValue(request.raidName)
-            item["Participants"] = AttributeValue().withSS(emptyList()) // Empty list initially
-            item["JobComposition"] = AttributeValue().withM(emptyMap()) // Empty map initially
-            item["Status"] = AttributeValue("Open") // Initially, the raid is open
-
             // 4. PutItem into Raids table
-            dynamoDB.putItem(raidsTable, item)
+            dynamoDB.putItem(raidsTable, RaidConverter.toDdb(raid))
 
             return RaidCreationResponse(raidId, true)
 
         } catch (e: Exception) {
-            context.logger.log("Error creating raid: ${e.message}")
+            context?.logger?.log("Error creating raid: ${e.message}")
+            println("Failed to create raid: ${e.message}")
             return RaidCreationResponse(raidId = "", success = false) // Indicate Error
         }
     }

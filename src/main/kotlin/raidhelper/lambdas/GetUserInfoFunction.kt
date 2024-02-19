@@ -1,5 +1,6 @@
 package raidhelper.lambdas
 
+import com.amazonaws.regions.Regions
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
@@ -17,7 +18,7 @@ data class GetUserInfoRequest(val discordId: String? = null)
 data class GetUserInfoResponse(val user: UserModel?, val message: String? = null)
 
 class GetUserInfoFunction : RequestHandler<Map<String,Any>, GetUserInfoResponse> { // Return type will be UserModel?
-    private val userDao: UserDao = UserDaoImpl(AmazonDynamoDBClientBuilder.defaultClient())
+    private val userDao: UserDao = UserDaoImpl(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
 
     override fun handleRequest(input: Map<String,Any>, context: Context?): GetUserInfoResponse {
         println("Initial input:") // Emphasize logging
