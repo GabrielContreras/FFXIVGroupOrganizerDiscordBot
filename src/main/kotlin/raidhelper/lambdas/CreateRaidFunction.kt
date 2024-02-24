@@ -16,12 +16,10 @@ import java.util.*
 data class RaidCreationRequest(
     val raidLeader: String,
     val dateAndTime: String, // Could be represented as an ISO 8601 compliant date-time string
-    val participants: List<String>,
-    val roleComposition: Map<String,Int>,
 )
 
 // Response data class
-data class RaidCreationResponse(val raidId: String, val success: Boolean)
+data class RaidCreationResponse(val raidModel: RaidModel?, val success: Boolean)
 
 class CreateRaidFunction : RequestHandler<Map<String,Any>, RaidCreationResponse> {
     private val dynamoDB = AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build()
@@ -40,24 +38,25 @@ class CreateRaidFunction : RequestHandler<Map<String,Any>, RaidCreationResponse>
                 raidId = raidId,
                 raidLeader = raidCreationRequest.raidLeader,
                 dateAndTime = raidCreationRequest.dateAndTime,
-                participants = raidCreationRequest.participants,
-                roleComposition = raidCreationRequest.roleComposition,
+                participants = listOf(),
+                roleComposition = mapOf(),
                 status = "Open",
             )
             // 2. Input Validation
             if (!isValidDateTime(raid.dateAndTime)) {
-                return RaidCreationResponse(raidId = "", success = false) // Indicate Validation Failure
+                context?.logger?.log("Error validating time: ${raid.dateAndTime}")
+                return RaidCreationResponse(raidModel = null, success = false) // Indicate Validation Failure
             }
 
             // 4. PutItem into Raids table
             dynamoDB.putItem(raidsTable, RaidConverter.toDdb(raid))
 
-            return RaidCreationResponse(raidId, true)
+            return RaidCreationResponse(raidModel = raid, success = true)
 
         } catch (e: Exception) {
             context?.logger?.log("Error creating raid: ${e.message}")
             println("Failed to create raid: ${e.message}")
-            return RaidCreationResponse(raidId = "", success = false) // Indicate Error
+            return RaidCreationResponse(raidModel = null, success = false) // Indicate Error
         }
     }
 

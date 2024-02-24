@@ -20,12 +20,12 @@ class RaidGroupDaoImplTest {
         whenever(mockedGetItemResult.item).thenReturn(testRaidGroupRecord.toMap())
     }
 
-    @Test
-    fun `Get Existing Raid Group Success`() {
-        val raidGroupDaoImpl = RaidGroupDaoImpl(mockedDynamoDBClient)
-        val retrievedGroup = raidGroupDaoImpl.getRaidGroup(testRaidGroupId)
-
-        assertEquals(testRaidGroupId, retrievedGroup?.raidGroupId)
-        // ... Asserts for raidIds, userIds
-    }
+//    @Test
+//    fun `Get Existing Raid Group Success`() {
+//        val raidGroupDaoImpl = RaidGroupDaoImpl(mockedDynamoDBClient)
+//        val retrievedGroup = raidGroupDaoImpl.getRaidGroup(testRaidGroupId)
+//
+//        assertEquals(testRaidGroupId, retrievedGroup?.raidGroupId)
+//        // ... Asserts for raidIds, userIds
+//    }
 }

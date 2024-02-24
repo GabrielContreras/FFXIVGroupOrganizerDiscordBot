@@ -3,9 +3,7 @@ package raidhelper.dynamodb.dao
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model.*
 import raidhelper.dynamodb.converter.UserConverter
-import raidhelper.dynamodb.dao.UserDao
 import raidhelper.dynamodb.model.UserModel
-import raidhelper.dynamodb.record.toMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

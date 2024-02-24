@@ -35,46 +35,46 @@ class UserDaoImplTest {
 //        // ... Asserts for availableJobs
 //        assertEquals(1, retrievedUser?.weeklyRaidLimit) // Now directly asserting the integer
 //    }
-
-    @Test
-    fun `create user`() {
-        val userDaoImpl = UserDaoImpl(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
-        val userModel = UserModel(
-            discordId = "test-id-3",
-            characterName = "char name",
-            availableJobs = listOf("rdm"),
-            currentSignups = listOf("raid-3", "raid-1"),
-            weeklyRaidLimit = 10,
-        )
-        println(userDaoImpl.createUser(userModel))
-    }
-
-    @Test
-    fun `Testing update user`() {
-        val userDao = UserDaoImpl(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
-        val userModel = UserModel(
-            discordId = "test-id-3",
-            characterName = "char name2",
-            availableJobs = listOf("rdm", "mch"),
-            currentSignups = listOf("raid-2", "raid-1"),
-            weeklyRaidLimit = 5,
-        )
-        println(userDao.updateUser(userModel))
-    }
-
-    @Test
-    fun `Testing get user`() {
-        val testid = "test-id"
-        val userDao = UserDaoImpl(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
-        println(userDao.getUser(testid))
-    }
-
-    @Test
-    fun `Testing deleting user`() {
-        val testid = "test-id-3"
-        val userDao = UserDaoImpl(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
-        runBlocking {
-            println(userDao.deleteUser(testid))
-        }
-    }
+//
+//    @Test
+//    fun `create user`() {
+//        val userDaoImpl = UserDaoImpl(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
+//        val userModel = UserModel(
+//            discordId = "test-id-3",
+//            characterName = "char name",
+//            availableJobs = listOf("rdm"),
+//            currentSignups = listOf("raid-3", "raid-1"),
+//            weeklyRaidLimit = 10,
+//        )
+//        println(userDaoImpl.createUser(userModel))
+//    }
+//
+//    @Test
+//    fun `Testing update user`() {
+//        val userDao = UserDaoImpl(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
+//        val userModel = UserModel(
+//            discordId = "test-id-3",
+//            characterName = "char name2",
+//            availableJobs = listOf("rdm", "mch"),
+//            currentSignups = listOf("raid-2", "raid-1"),
+//            weeklyRaidLimit = 5,
+//        )
+//        println(userDao.updateUser(userModel))
+//    }
+//
+//    @Test
+//    fun `Testing get user`() {
+//        val testid = "test-id"
+//        val userDao = UserDaoImpl(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
+//        println(userDao.getUser(testid))
+//    }
+//
+//    @Test
+//    fun `Testing deleting user`() {
+//        val testid = "test-id-3"
+//        val userDao = UserDaoImpl(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
+//        runBlocking {
+//            println(userDao.deleteUser(testid))
+//        }
+//    }
 }

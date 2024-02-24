@@ -11,8 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import raidhelper.dynamodb.converter.RaidGroupConverter
 import raidhelper.dynamodb.model.RaidGroupModel
-import raidhelper.dynamodb.model.RaidModel
-import raidhelper.dynamodb.record.toMap
 
 class RaidGroupDaoImpl(private val ddbClient: AmazonDynamoDB) : RaidGroupDao {
     private val tableName = System.getenv("RAID_GROUPS_TABLE_NAME") ?: "RaidGroups"
@@ -55,7 +53,7 @@ class RaidGroupDaoImpl(private val ddbClient: AmazonDynamoDB) : RaidGroupDao {
         val expressionAttributeValues = mutableMapOf<String,AttributeValue>()
 
         var needsComma = false
-        for(prop in listOf("RaidIds", "UserIds")) {
+        for(prop in listOf("GroupName","RaidIds", "UserIds")) {
             if(needsComma) updateExpression.append(", ")
             updateExpression.append("")
             expressionAttributeValues[":$prop"] = AttributeValue().withL(raidGroupRecord[prop]?.l ?: emptyList())

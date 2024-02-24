@@ -1,4 +1,4 @@
-package org.example.raidhelper.lambdas
+package raidhelper.lambdas
 
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.lambda.runtime.RequestHandler
@@ -6,12 +6,17 @@ import raidhelper.dynamodb.dao.RaidGroupDao
 import raidhelper.dynamodb.dao.RaidGroupDaoImpl
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.lambda.runtime.Context
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import raidhelper.dynamodb.model.RaidGroupModel
 import java.util.*
 
-
+data class CreateRaidGroupRequest(
+    val groupName: String
+)
 data class CreateRaidGroupResponse(
-    val raidGroupId: String,
+    val raidGroup: RaidGroupModel?,
     val success: Boolean,
 )
 class CreateRaidGroupFunction: RequestHandler<Map<String, Any>, CreateRaidGroupResponse> {
@@ -23,23 +28,25 @@ class CreateRaidGroupFunction: RequestHandler<Map<String, Any>, CreateRaidGroupR
     )
 
     override fun handleRequest(input: Map<String, Any>, context: Context?): CreateRaidGroupResponse {
-        println("Initial input: ")
-        println(input)
+        val mapper = ObjectMapper().registerKotlinModule()
+        val jsonString = mapper.writeValueAsString(input)
+        val raidCreationRequest: CreateRaidGroupRequest = mapper.readValue(jsonString, CreateRaidGroupRequest::class.java)
+
         val raidGroupId = UUID.randomUUID().toString()
 
-        val raidGroup: RaidGroupModel = RaidGroupModel(
+        val raidGroup = RaidGroupModel(
             raidGroupId = raidGroupId,
-            userIds = listOf(input["discordId"] as? String ?: return CreateRaidGroupResponse("", false)),
+            groupName = raidCreationRequest.groupName,
+            userIds = emptyList(),
             raidIds = emptyList(),
         )
-        println("Raid Group: $raidGroup")
+
         try {
             raidGroupDao.createRaidGroup(raidGroup)
-            return CreateRaidGroupResponse(raidGroupId,true)
+            return CreateRaidGroupResponse(raidGroup,true)
         } catch (e: Exception) {
             context?.logger?.log("Error creating raid group: ${e.message}")
-            return CreateRaidGroupResponse("", false)
+            return CreateRaidGroupResponse(null, false)
         }
     }
-
 }
