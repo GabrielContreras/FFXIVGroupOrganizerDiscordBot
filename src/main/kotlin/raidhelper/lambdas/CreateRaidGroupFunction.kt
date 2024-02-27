@@ -7,13 +7,13 @@ import raidhelper.dynamodb.dao.RaidGroupDaoImpl
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.lambda.runtime.Context
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import raidhelper.dynamodb.model.RaidGroupModel
 import java.util.*
 
 data class CreateRaidGroupRequest(
-    val groupName: String
+    val callerId: String,
+    val groupName: String,
 )
 data class CreateRaidGroupResponse(
     val raidGroup: RaidGroupModel?,
@@ -35,10 +35,13 @@ class CreateRaidGroupFunction: RequestHandler<Map<String, Any>, CreateRaidGroupR
         val raidGroupId = UUID.randomUUID().toString()
 
         val raidGroup = RaidGroupModel(
+            ownerId = raidCreationRequest.callerId,
             raidGroupId = raidGroupId,
             groupName = raidCreationRequest.groupName,
             userIds = emptyList(),
             raidIds = emptyList(),
+            roles = emptyList(),
+            subRoles = emptyMap(),
         )
 
         try {

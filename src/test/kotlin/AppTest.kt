@@ -1,4 +1,4 @@
-import org.example.App
+import App
 import org.junit.jupiter.api.Test
 
 class AppTest {

@@ -51,19 +51,36 @@ class RaidGroupDaoImpl(private val ddbClient: AmazonDynamoDB) : RaidGroupDao {
 
         val updateExpression = StringBuilder("SET ")
         val expressionAttributeValues = mutableMapOf<String,AttributeValue>()
+        val expressionAttributeNames = mutableMapOf<String,String>()
 
         var needsComma = false
-        for(prop in listOf("GroupName","RaidIds", "UserIds")) {
+        for(prop in listOf("OwnerId","GroupName", "RaidIds", "UserIds", "SubRoles")) {
             if(needsComma) updateExpression.append(", ")
-            updateExpression.append("")
-            expressionAttributeValues[":$prop"] = AttributeValue().withL(raidGroupRecord[prop]?.l ?: emptyList())
+            updateExpression.append("$prop = :$prop")
+            expressionAttributeValues[":$prop"] = if(prop == "RaidIds" || prop == "UserIds") {
+                AttributeValue().withL(raidGroupRecord[prop]?.l ?: emptyList())
+            } else if(prop == "SubRoles") {
+                AttributeValue().withM(raidGroupRecord[prop]?.m ?: emptyMap())
+            } else {
+                AttributeValue().withS(raidGroupRecord[prop]?.s)
+            }
             needsComma = true
         }
+
+        if(needsComma) updateExpression.append(", ")
+        updateExpression.append("#roles = :roles")
+        expressionAttributeValues[":roles"] = AttributeValue().withL(raidGroupRecord["Roles"]?.l ?: emptyList())
+        expressionAttributeNames["#roles"] = "Roles"
+        println("Expression update: ${expressionAttributeValues}")
+
         val request = UpdateItemRequest()
             .withTableName(tableName)
             .withKey(key)
             .withUpdateExpression(updateExpression.toString())
             .withExpressionAttributeValues(expressionAttributeValues)
+            .withExpressionAttributeNames(expressionAttributeNames)
+
+        println("Update Request: $request")
 
         try {
             ddbClient.updateItem(request)
